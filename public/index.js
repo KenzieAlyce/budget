@@ -1,6 +1,35 @@
 let transactions = [];
 let myChart;
 
+const request = window.indexedDB.open("budgetDB", 1);
+let db;
+
+request.onsuccess = (event) => {
+  console.log(request.result.name);
+  db = event.target.result;
+  // check if app is online before reading from db
+  if (navigator.onLine) {
+    checkDataBase();
+  }
+};
+
+request.onupgradeneeded = (event) => {
+  // create object store called "pending" and set autoIncrement to true
+   db = event.target.result;
+  db.createObjectStore("pending", { autoIncrement: true });
+};
+
+request.onerror = (event) => {
+//console.log('error: ' event.target.errorcode);
+console.log('error encountered');
+};
+
+function saveRecord(exchange) {
+    let transaction = db.transaction(["pending"], "readwrite");
+    let store = transaction.objectStore("pending");
+    store.add(exchange);
+} 
+
 fetch("/api/transaction")
   .then(response => {
     return response.json();
@@ -77,6 +106,7 @@ function populateChart() {
     }
   });
 }
+
 
 function sendTransaction(isAdding) {
   let nameEl = document.querySelector("#t-name");
